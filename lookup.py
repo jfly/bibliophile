@@ -46,7 +46,7 @@ def find_books(user_id, dev_key, shelf, branch, biblio, csvname=None):
         writer = csv.writer(csvfile)
         writer.writerow(["Title", "Author", "Call Number"])
     for book in BiblioParser(wanted_books, branch, biblio):
-        logger.info("  %s - %s", book.title, book.call_number)
+        logger.info("  %s - %s - %s", book.title, book.call_number, book.format)
         logger.debug("%s", book)
         if writer:
             writer.writerow([book.title, book.author, book.call_number])

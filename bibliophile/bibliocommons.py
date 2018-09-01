@@ -30,7 +30,7 @@ from bibliophile import syndetics
 
 logger = logging.getLogger('bibliophile')
 Book = namedtuple('Book', ['title', 'author', 'description', 'call_number',
-                           'cover_image', 'full_record_link'])
+                           'cover_image', 'full_record_link', 'format'])
 
 
 def grouper(input_list, chunk_size):
@@ -50,13 +50,13 @@ class QueryBuilder:
         """ Get query for one book - Use its ISBN (preferred) or title + author. """
         conditions = {}
 
-        if book.isbn:
+        if False and book.isbn: #<<<
             conditions['identifier'] = book.isbn
         else:
             conditions['contributor'] = book.author
             conditions['title'] = book.title
-            if print_only:
-                conditions['formatcode'] = 'BK'
+            #<<< if print_only:
+            #<<<     conditions['formatcode'] = 'BK'
 
         rules = [f'{name}:({val})' for name, val in conditions.items()]
         query = ' AND '.join(rules)
@@ -151,9 +151,12 @@ class BiblioParser:
         desc_label = desc_soup.find('b', text='Description:')
         description = desc_label.find_next('p').text if desc_label else ''
 
+        book_format_label = desc_soup.find('b', text='Format:')
+        book_format = book_format_label.next_sibling.strip() if book_format_label else None
+
         # Get high-quality cover art from the thumbnail that's given for RSS
         thumbnail = desc_soup.find('div', class_="jacketCoverDiv")
-        if thumbnail:
+        if False and thumbnail: #<<<
             medium_gif = thumbnail.find('img').attrs['src']
             cover_image = syndetics.higher_quality_cover(image_url=medium_gif)
         else:
@@ -165,7 +168,8 @@ class BiblioParser:
             author=author,
             call_number=call_number,
             description=description,
-            cover_image=cover_image
+            cover_image=cover_image,
+            format=book_format,
         )
 
     def matching_books(self, query_response):
@@ -186,7 +190,8 @@ class BiblioParser:
         """ Yield all books found in the catalog, in no particular order. """
         # Undocumented, but the API appears to only support lookup of 10 books
         queries = (QueryBuilder.bibliocommons_query(isbn_chunk, self.branch)
-                   for isbn_chunk in grouper(self.books, 10))
+                   #<<< for isbn_chunk in grouper(self.books, 10))
+                   for isbn_chunk in grouper(self.books, 5))
         lookup_requests = [self.async_book_lookup(q) for q in queries]
         for response in grequests.imap(lookup_requests):
             for book in self.matching_books(response):
